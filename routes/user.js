@@ -60,7 +60,9 @@ router.post("/register", async (req, res) => {
         username,
         password: hashedPassword,
       });
-      res.status(200).json({ message: "User register successfully!", user });
+      return res
+        .status(200)
+        .json({ message: "User register successfully!", user });
     } catch (err) {
       if (err.code === 11000)
         return res
@@ -132,7 +134,7 @@ router.post("/add-post", auth, async (req, res) => {
       process.env.TOKEN_SECRET
     );
     const adminId = decodedToken.id;
-    const newBlog = new Post({
+    const newBlog = new Task({
       title: req.body.title,
       description: req.body.description,
       status: "To Do",
@@ -153,7 +155,7 @@ router.post("/add-post", auth, async (req, res) => {
  */
 router.get("/edit-post/:id", auth, async (req, res) => {
   try {
-    const tasks = await Post.findById({ _id: req.params.id });
+    const tasks = await Task.findById({ _id: req.params.id });
     return res.status(200).json({ tasks: tasks });
   } catch (error) {
     console.log(error);
@@ -166,7 +168,7 @@ router.get("/edit-post/:id", auth, async (req, res) => {
  */
 router.put("/edit-post/:id", auth, async (req, res) => {
   try {
-    await Post.findByIdAndUpdate(req.params.id, {
+    await Task.findByIdAndUpdate(req.params.id, {
       title: req.body.title,
       description: req.body.description,
       status: req.body.status,
@@ -183,7 +185,7 @@ router.put("/edit-post/:id", auth, async (req, res) => {
  */
 router.delete("/delete-post/:id", auth, async (req, res) => {
   try {
-    await Post.findByIdAndDelete(req.params.id);
+    await Task.findByIdAndDelete(req.params.id);
     return res.status(200).json({ message: "Task deleted" });
   } catch (error) {
     console.log(error);
