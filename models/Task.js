@@ -23,6 +23,10 @@ const PostSchema = new Schema({
     required: true,
     default: new Date(),
   },
+  userId: {
+    type: String,
+    required: true,
+  },
 });
 
 module.exports = mongoose.model("Post", PostSchema);
