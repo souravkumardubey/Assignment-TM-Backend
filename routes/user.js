@@ -6,7 +6,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const auth = require("../middlewares/auth");
 
-const jwtSecret = process.env.JWT_SECRET;
+const jwtSecret = process.env.TOKEN_SECRET;
 
 /**
  * auth middleware
@@ -33,17 +33,32 @@ router.post("/login", async (req, res) => {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: "Invalid credentials" });
-
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!user) return res.status(404).json({ message: "Invalid credentials" });
-
+    if (!isPasswordValid)
+      return res.status(404).json({ message: "Invalid credentials" });
     const token = jwt.sign({ userId: user._id }, jwtSecret);
-    res.cookie("token", token, {
-      httpOnly: true,
-    });
-    res.status(200).json({ message: "Successful login!" });
+
+    // Set the token as a cookie
+    res.cookie("authToken", token);
+
+    return res.status(200).json({ message: "Successful login!" });
   } catch (err) {
     return res.status(404).json({ message: "Invalid credentials" });
+  }
+});
+
+/**
+ * GET
+ * Admin - Dashboard
+ */
+router.get("/dashboard", auth, async (req, res) => {
+  try {
+    const decodedToken = jwt.verify(req.cookies.authToken, jwtSecret);
+    const adminId = decodedToken.userId;
+    const tasks = await Task.find({ userId: adminId });
+    return res.status(200).json({ tasks: tasks });
+  } catch (error) {
+    return res.status(400).json({ message: "Something went wrong!" });
   }
 });
 
@@ -88,24 +103,6 @@ router.get("/logout", (req, res) => {
   }
 });
 
-/**
- * GET
- * Admin - Dashboard
- */
-router.get("/dashboard", auth, async (req, res) => {
-  try {
-    const decodedToken = jwt.verify(
-      req.headers["userId"],
-      process.env.TOKEN_SECRET
-    );
-    const adminId = decodedToken.id;
-    const tasks = await Task.find({ userId: adminId });
-    return res.status(200).json({ tasks: tasks });
-  } catch (error) {
-    return res.status(400).json({ message: "Something went wrong!" });
-  }
-});
-
 // /**
 //  * GET
 //  * ADD NEW BLOG
@@ -142,7 +139,7 @@ router.post("/add-post", auth, async (req, res) => {
       userId: adminId,
     });
 
-    await Post.create(newBlog);
+    await Task.create(newBlog);
     res.redirect("/dashboard");
   } catch (error) {
     console.log(error);
