@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
+/**
+ * Task Model
+ */
 const PostSchema = new Schema({
   title: {
     type: String,
@@ -17,7 +20,8 @@ const PostSchema = new Schema({
   },
   dueDate: {
     type: Date,
-    default: Date.now,
+    required: true,
+    default: new Date(),
   },
 });
 
