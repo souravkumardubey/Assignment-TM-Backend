@@ -14,14 +14,13 @@ const PostSchema = new Schema({
     required: true,
   },
   status: {
-    type: String,
-    enum: ["To Do", "In Progress", "Done"],
-    default: "To Do",
+    type: Number,
+    default: 1,
   },
   dueDate: {
-    type: Date,
+    type: String,
     required: true,
-    default: new Date(),
+    default: new Date().toJSON().slice(0, 10)
   },
   userId: {
     type: String,
