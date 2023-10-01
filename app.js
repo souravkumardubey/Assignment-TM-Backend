@@ -27,8 +27,8 @@ app.use(
   })
 );
 
-app.use("/", require("./server/routes/main"));
-app.use("/", require("./server/routes/admin"));
+app.use("/", require("./routes/user"));
+app.use("/", require("./routes/task"));
 
 const PORT = process.env.PORT || 5000;
 
