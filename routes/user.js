@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Post = require("../models/Post");
+const Task = require("../models/Task");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -25,31 +25,10 @@ const jwtSecret = process.env.JWT_SECRET;
 // };
 
 /**
- * GET
- * Admin - Login
- */
-router.get("/admin", async (req, res) => {
-  try {
-    const details = {
-      title: "Admin",
-      description: "My personal blogging website!",
-    };
-    const token = req.cookies.token;
-    if (token) return res.redirect("/dashboard");
-    res.render("admin/index", {
-      details,
-      layout: adminLayout,
-    });
-  } catch (err) {
-    console.log(err);
-  }
-});
-
-/**
  * POST
  * Admin - Login Step
  */
-router.post("/admin", async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
@@ -62,7 +41,7 @@ router.post("/admin", async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
     });
-    res.redirect("/dashboard");
+    res.status(200).json({ message: "Successful login!" });
   } catch (err) {
     return res.status(404).json({ message: "Invalid credentials" });
   }
@@ -90,7 +69,7 @@ router.post("/register", async (req, res) => {
       return res.status(409).json("Internal server error");
     }
   } catch (err) {
-    console.log(err);
+    return res.status(409).json("Internal server error");
   }
 });
 
@@ -100,14 +79,10 @@ router.post("/register", async (req, res) => {
  */
 router.get("/logout", (req, res) => {
   try {
-    const details = {
-      title: "Souav Dubey Blogs",
-      description: "My personal blogging website!",
-    };
     res.clearCookie("token");
-    res.redirect("/");
+    return res.status(200).json({ message: "Logged out!" });
   } catch (error) {
-    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -116,32 +91,16 @@ router.get("/logout", (req, res) => {
  * Admin - Dashboard
  */
 router.get("/dashboard", auth, async (req, res) => {
-  const details = {
-    title: "Dashboard",
-    description: "My personal blog page.",
-  };
   try {
-    const blogs = await Post.find();
-    res.render("admin/dashboard", { details, blogs, layout: adminLayout });
+    const decodedToken = jwt.verify(
+      req.headers["userId"],
+      process.env.TOKEN_SECRET
+    );
+    const adminId = decodedToken.id;
+    const tasks = await Task.find({ userId: adminId });
+    return res.status(200).json({ tasks: tasks });
   } catch (error) {
-    console.log(error);
-  }
-});
-
-/**
- * GET
- * ADD NEW BLOG
- */
-router.get("/add-post", auth, async (req, res) => {
-  const details = {
-    title: "Add Post",
-    description: "My personal blog page.",
-  };
-  try {
-    const blogs = await Post.find();
-    res.render("admin/add-post", { details, blogs, layout: adminLayout });
-  } catch (error) {
-    console.log(error);
+    return res.status(400).json({ message: "Something went wrong!" });
   }
 });
 
@@ -168,9 +127,17 @@ router.get("/add-post", auth, async (req, res) => {
  */
 router.post("/add-post", auth, async (req, res) => {
   try {
+    const decodedToken = jwt.verify(
+      req.headers["userId"],
+      process.env.TOKEN_SECRET
+    );
+    const adminId = decodedToken.id;
     const newBlog = new Post({
       title: req.body.title,
-      body: req.body.content,
+      description: req.body.description,
+      status: "To Do",
+      dueDate: new Date(),
+      userId: adminId,
     });
 
     await Post.create(newBlog);
@@ -186,12 +153,8 @@ router.post("/add-post", auth, async (req, res) => {
  */
 router.get("/edit-post/:id", auth, async (req, res) => {
   try {
-    const details = {
-      title: "Edit Blog",
-      description: "My personal blog page.",
-    };
-    const blog = await Post.findById({ _id: req.params.id });
-    res.render(`admin/edit-post`, { details, blog, layout: adminLayout });
+    const tasks = await Post.findById({ _id: req.params.id });
+    return res.status(200).json({ tasks: tasks });
   } catch (error) {
     console.log(error);
   }
@@ -205,10 +168,10 @@ router.put("/edit-post/:id", auth, async (req, res) => {
   try {
     await Post.findByIdAndUpdate(req.params.id, {
       title: req.body.title,
-      body: req.body.content,
-      updatedOn: Date.now(),
+      description: req.body.description,
+      status: req.body.status,
     });
-    res.redirect("/dashboard");
+    return res.status(200).json({ message: "Task updated." });
   } catch (error) {
     console.log(error);
   }
@@ -221,7 +184,7 @@ router.put("/edit-post/:id", auth, async (req, res) => {
 router.delete("/delete-post/:id", auth, async (req, res) => {
   try {
     await Post.findByIdAndDelete(req.params.id);
-    res.redirect("/dashboard");
+    return res.status(200).json({ message: "Task deleted" });
   } catch (error) {
     console.log(error);
   }
