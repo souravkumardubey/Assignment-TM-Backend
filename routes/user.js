@@ -108,22 +108,7 @@ router.get("/dashboard", auth, async (req, res) => {
   }
 });
 
-// /**
-//  * GET
-//  * ADD NEW BLOG
-//  */
-// router.get("/add-post", auth, async (req, res) => {
-//   const details = {
-//     title: "Add Post",
-//     description: "My personal blog page.",
-//   };
-//   try {
-//     const blogs = await Post.find();
-//     res.render("admin/add-post", { details, blogs, layout: adminLayout });
-//   } catch (error) {
-//     console.log(error);
-//   }
-// });
+
 
 /**
  * POST
