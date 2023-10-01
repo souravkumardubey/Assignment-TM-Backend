@@ -31,7 +31,6 @@ const jwtSecret = process.env.TOKEN_SECRET;
 router.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
-    console.log(username,password)
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: "Invalid credentials" });
 
@@ -93,9 +92,8 @@ router.get("/logout", (req, res) => {
  * GET
  * Admin - Dashboard
  */
-router.get("/dashboard", auth, async (req, res) => {
+router.get("/dashboard", async (req, res) => {
   try {
-    console.log(req.headers['user'])
     const decodedToken = jwt.verify(
       req.headers["user"],
       process.env.TOKEN_SECRET
@@ -107,7 +105,6 @@ router.get("/dashboard", auth, async (req, res) => {
     return res.status(400).json({ message: "Something went wrong!" });
   }
 });
-
 
 
 /**
@@ -125,7 +122,7 @@ router.post("/add-post", auth, async (req, res) => {
       title: req.body.title,
       description: req.body.description,
       status: req.status,
-      dueDate: new Date(),
+      dueDate: new Date().toJSON().slice(0, 10),
       userId: adminId,
     });
 
