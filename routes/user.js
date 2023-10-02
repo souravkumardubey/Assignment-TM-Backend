@@ -41,7 +41,7 @@ router.post("/login", async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
     });
-    res.status(200).json({ message: "Successful login!" });
+    res.status(200).json({ message: "Successful login!",token:token });
   } catch (err) {
     return res.status(404).json({ message: "Invalid credentials" });
   }
@@ -51,7 +51,7 @@ router.post("/login", async (req, res) => {
  * POST
  * Admin - Register
  */
-router.post("/register", async (req, res) => {
+router.post("/register",async (req, res) => {
   try {
     const { username, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -111,7 +111,7 @@ router.get("/dashboard", async (req, res) => {
  * POST
  * Admin - Add New Blog
  */
-router.post("/add-post", auth, async (req, res) => {
+router.post("/add-post", async (req, res) => {
   try {
     const decodedToken = jwt.verify(
       req.headers["user"],
@@ -121,13 +121,13 @@ router.post("/add-post", auth, async (req, res) => {
     const newBlog = new Task({
       title: req.body.title,
       description: req.body.description,
-      status: req.status,
-      dueDate: new Date().toJSON().slice(0, 10),
+      status: req.body.status,
+      dueDate: req.body.dueDate,
       userId: adminId,
     });
 
-    await Task.create(newBlog);
-    res.redirect("/dashboard");
+    const task = await Task.create(newBlog);
+    return res.status(200).json({'_id':task['_id']});
   } catch (error) {
     console.log(error);
   }
@@ -137,7 +137,7 @@ router.post("/add-post", auth, async (req, res) => {
  * GET
  * Admin - Edit blog
  */
-router.get("/edit-post/:id", auth, async (req, res) => {
+router.get("/edit-post/:id", async (req, res) => {
   try {
     const tasks = await Task.findById({ _id: req.params.id });
     return res.status(200).json({ tasks: tasks });
@@ -150,14 +150,15 @@ router.get("/edit-post/:id", auth, async (req, res) => {
  * PUT
  * Admin - Edit blog
  */
-router.put("/edit-post/:id", auth, async (req, res) => {
+router.put("/edit-post/:id", async (req, res) => {
   try {
     await Task.findByIdAndUpdate(req.params.id, {
       title: req.body.title,
       description: req.body.description,
       status: req.body.status,
     });
-    return res.status(200).json({ message: "Task updated." });
+
+    return res.status(200).json({ '_id':req.params.id} );
   } catch (error) {
     console.log(error);
   }
@@ -167,10 +168,10 @@ router.put("/edit-post/:id", auth, async (req, res) => {
  * DELETE
  * Admin = Delete Blog
  */
-router.delete("/delete-post/:id", auth, async (req, res) => {
+router.delete("/delete-post/:id", async (req, res) => {
   try {
     await Task.findByIdAndDelete(req.params.id);
-    return res.status(200).json({ message: "Task deleted" });
+    return res.status(200).json({ msg:1 });
   } catch (error) {
     console.log(error);
   }
